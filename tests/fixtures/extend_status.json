@@ -1,0 +1,10 @@
+[
+  {
+    "adId": 123,
+    "adEndDate": "03.12.2026",
+    "eligibleToExtend": "25.11.2026",
+    "adExtendedEndDate": "01.02.2027",
+    "extendAdStatus": "CANNOT_BE_EXTENDED",
+    "extensionPrice": 0
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "total": {
+    "averageRating": 4.5,
+    "starRating": {
+      "upstream": "unknown-scale"
+    },
+    "ratingReviewCount": 2
+  },
+  "manual": null,
+  "automatic": {
+    "starRating": "GOOD",
+    "ratingReviewCount": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "thread-synthetic", "adId": 101, "adTitle": "Synthetic lamp",
+  "adStatus": "ACTIVE", "adPriceInEuroCent": 4250, "adPriceType": "FIXED",
+  "role": "BUYER", "sellerName": "Synthetic seller", "numUnread": 1,
+  "messages": [
+    {"messageId": "message-new", "boundness": "OUTBOUND", "receivedDate": "2026-10-15T12:00:00+02:00",
+     "text": "Hallo!\n\tSchöne Grüße — ist die Lampe verfügbar?", "type": "TEXT", "attachments": []},
+    {"messageId": 41, "boundness": "INBOUND", "receivedDate": "2026-10-15T08:00:00Z",
+     "text": "Guten Morgen! Vollständiger Text mit Umlauten: äöüß.", "type": "TEXT", "attachments": [{"type": "IMAGE"}]},
+    {"messageId": "message-tie", "direction": "INBOUND", "receivedDate": "2026-10-15T08:00:00Z", "text": "Gleiche Zeit."},
+    {"messageId": "message-system", "boundness": "INVENTED_SYSTEM", "receivedDate": "2026-10-15T09:00:00Z",
+     "title": "Synthetic system event", "type": "SYSTEM"}
+  ]
+}

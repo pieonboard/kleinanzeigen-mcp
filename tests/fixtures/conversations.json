@@ -1,0 +1,11 @@
+{
+  "data": {"items": [
+    {"id": "read-thread", "adId": 101, "adTitle": "Synthetic lamp", "role": "SELLER",
+     "sellerName": "Synthetic owner", "buyerName": "Synthetic buyer", "unread": false,
+     "unreadMessagesCount": 0, "receivedDate": "2026-10-15T09:00:00Z", "textShortTrimmed": "Read preview"},
+    {"id": "unread-thread", "adId": "102", "adTitle": "Synthetic chair", "adStatus": "ACTIVE",
+     "adPriceType": "FIXED", "role": "BUYER", "sellerName": "Synthetic seller", "unread": true,
+     "unreadMessagesCount": 2, "receivedDate": "2026-10-15T08:00:00Z", "textShortTrimmed": "Unread preview"},
+    {"id": 103, "adId": "103", "role": "BUYER", "sellerName": "Synthetic other"}
+  ]}
+}

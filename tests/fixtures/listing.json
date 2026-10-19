@@ -1,0 +1,138 @@
+{
+  "{http://www.ebayclassifiedsgroup.com/schema/ad/v1}ad": {
+    "value": {
+      "id": 101,
+      "title": {
+        "value": "RTX4070 &amp; Speicher"
+      },
+      "description": {
+        "value": "Sehr gut<br />128 GB &amp; Zubehör"
+      },
+      "price": {
+        "amount": {
+          "value": "42.50"
+        },
+        "currency-iso-code": {
+          "value": {
+            "value": "EUR",
+            "localized-label": "€"
+          }
+        },
+        "price-type": {
+          "value": "NEGOTIABLE"
+        }
+      },
+      "ad-address": {
+        "state": {
+          "value": "Teststadt"
+        },
+        "zip-code": {
+          "value": "12345"
+        },
+        "latitude": {
+          "value": "52.5"
+        },
+        "longitude": {
+          "value": 13.4
+        }
+      },
+      "category": {
+        "id": {
+          "value": 225
+        }
+      },
+      "user-id": {
+        "value": 999
+      },
+      "contact-name": {
+        "value": "Synthetic Seller"
+      },
+      "poster-type": {
+        "value": "PRIVATE"
+      },
+      "seller-account-type": {
+        "value": "COMMERCIAL"
+      },
+      "ad-status": {
+        "value": "PAUSED"
+      },
+      "ad-type": {
+        "value": "OFFERED"
+      },
+      "start-date-time": {
+        "value": "2026-01-01T12:00:00Z"
+      },
+      "attributes": {
+        "attribute": [
+          {
+            "name": "wohnung_mieten.qm",
+            "localized-label": "Wohnfläche",
+            "value": {
+              "value": "90"
+            }
+          },
+          {
+            "name": "wohnung_mieten.zimmer",
+            "localized-label": {
+              "value": "Zimmer"
+            },
+            "value": [
+              {
+                "value": {
+                  "value": "3"
+                }
+              }
+            ]
+          },
+          {
+            "name": "synthetic.tags",
+            "localized-label": "Tags",
+            "value": [
+              {
+                "value": "one"
+              },
+              {
+                "value": "two"
+              }
+            ]
+          }
+        ]
+      },
+      "pictures": {
+        "picture": {
+          "link": [
+            {
+              "rel": "teaser",
+              "href": "https://img.kleinanzeigen.de/small.png"
+            },
+            {
+              "rel": "XXL",
+              "href": "https://img.kleinanzeigen.de/xxl.png"
+            },
+            {
+              "rel": "large",
+              "href": "https://img.kleinanzeigen.de/test.png"
+            }
+          ]
+        }
+      },
+      "link": {
+        "rel": "self-public-website",
+        "href": "https://www.kleinanzeigen.de/s-anzeige/synthetic/101"
+      },
+      "shipping-options": {
+        "shipping-option": {
+          "id": "synthetic-shipping"
+        }
+      },
+      "buy-now": {
+        "selected": "false"
+      },
+      "features-active": {
+        "feature-active": {
+          "name": "TOPAD"
+        }
+      }
+    }
+  }
+}

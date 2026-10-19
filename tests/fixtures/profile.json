@@ -1,0 +1,24 @@
+{
+  "id": "999",
+  "contactName": "Synthetic Seller",
+  "posterType": "PRIVATE",
+  "userSince": "2020-01-01",
+  "counters": {
+    "onlineAds": 2,
+    "historicalAds": 5,
+    "followers": 0
+  },
+  "replyIndicators": {
+    "replySpeed": "FAST"
+  },
+  "userRatings": {
+    "averageRating": 4.5
+  },
+  "userBadges": {
+    "badges": [
+      {
+        "kind": "synthetic"
+      }
+    ]
+  }
+}
