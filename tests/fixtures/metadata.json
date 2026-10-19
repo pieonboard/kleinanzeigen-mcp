@@ -1,0 +1,57 @@
+{
+  "{http://www.ebayclassifiedsgroup.com/schema/ad/v1}ads-search-options": {
+    "value": {
+      "sortType": {
+        "type": "ENUM",
+        "search-param": "sortType",
+        "localized-label": {
+          "value": "Sortierung"
+        },
+        "supported-value": {
+          "value": "PRICE_ASCENDING",
+          "localized-label": "Preis aufsteigend"
+        }
+      },
+      "attributes": {
+        "attribute": [
+          {
+            "name": "synthetic.kind",
+            "localized-label": {
+              "value": "Art"
+            },
+            "type": "ENUM",
+            "search-multi-select": "true",
+            "supported-value": [
+              {
+                "value": "one",
+                "localized-label": "Eins"
+              },
+              {
+                "value": {
+                  "value": "two"
+                },
+                "localized-label": {
+                  "value": "Zwei"
+                }
+              }
+            ]
+          },
+          {
+            "name": "synthetic.condition",
+            "type": "ENUM",
+            "search-multi-select": false,
+            "supported-value": {
+              "value": "new",
+              "localized-label": "Neu"
+            }
+          },
+          {
+            "name": "synthetic.free",
+            "type": "STRING",
+            "search-multi-select": true
+          }
+        ]
+      }
+    }
+  }
+}

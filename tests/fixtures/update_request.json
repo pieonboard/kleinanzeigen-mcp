@@ -1,0 +1,15 @@
+{
+  "provenance": "RECONSTRUCTION of the ASSERTED BUT UNVERIFIED update contract; not a live capture or recovered implementation. Namespace/field encodings follow the monkrel client XML. Live validation required.",
+  "method": "PUT",
+  "url": "https://api.kleinanzeigen.de/api/users/700/ads/123.json",
+  "content_type": "application/xml",
+  "arguments": {
+    "listing_id": "123",
+    "title": "Titel <neu>",
+    "description": "New & safe",
+    "price": 42,
+    "price_type": "NEGOTIABLE",
+    "picture_urls": ["https://img.kleinanzeigen.de/test.jpg?a=1&b=2"]
+  },
+  "body": "<?xml version='1.0' encoding='UTF-8' standalone='yes'?><ad:ad xmlns:ad=\"http://www.ebayclassifiedsgroup.com/schema/ad/v1\" xmlns:types=\"http://www.ebayclassifiedsgroup.com/schema/types/v1\" xmlns:pic=\"http://www.ebayclassifiedsgroup.com/schema/picture/v1\"><ad:title>Titel &lt;neu&gt;</ad:title><ad:description>New &amp; safe</ad:description><ad:price><types:price-type><types:value>PLEASE_CONTACT</types:value></types:price-type><types:amount>42</types:amount></ad:price><pic:pictures><pic:picture><pic:link rel=\"XXL\" href=\"https://img.kleinanzeigen.de/test.jpg?a=1&amp;b=2\"/></pic:picture></pic:pictures></ad:ad>"
+}

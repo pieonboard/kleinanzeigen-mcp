@@ -1,0 +1,36 @@
+{
+  "{http://www.ebayclassifiedsgroup.com/schema/location/v1}locations": {
+    "value": {
+      "location": {
+        "id": {
+          "value": 10
+        },
+        "localized-name": {
+          "value": "Berlin"
+        },
+        "latitude": {
+          "value": "52.5"
+        },
+        "longitude": {
+          "value": "13.4"
+        },
+        "radius": {
+          "value": "15"
+        },
+        "regions": {
+          "region": {
+            "localized-name": {
+              "value": "Synthetic Region"
+            }
+          }
+        },
+        "location": {
+          "id": 11,
+          "localized-name": {
+            "value": "Berlin (Testbezirk)"
+          }
+        }
+      }
+    }
+  }
+}
