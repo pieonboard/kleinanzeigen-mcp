@@ -386,24 +386,23 @@ Preserve full text of every returned message; compact raw metadata away. Normali
 
 Success: `{ok: true, action: "seller_contacted", listing_id: str, conversation_id: str, conversation_created: bool, message_sent: true}`. Do not fabricate a message ID: M `reply()` returns None. Max one create and one send per invocation, with optional public listing context GET, account-ID GET and existing-thread load as needed; all serialized/paced. This is not transactional and cannot promise exactly-once delivery.
 
-Exact source-supported wire plan (M `start_conversation`, `reply`):
+Verified wire plan (live 2026-11-14; client contract from the decompiled Android app, evidence in [docs/validation-2026-11-14-first-contact.md](validation-2026-11-14-first-contact.md)):
 
 ```text
-POST api.kleinanzeigen.de/api/users/{uid}/create-conversation/{listing_id}
-  query: contactName=<effective_name>       # NO text/body field in M
-  -> raw JSON, expected conversation identifier not yet fixture-verified
-POST gateway.kleinanzeigen.de/messagebox/api/users/{uid}/conversations/{id}
-  query: warnPhoneNumber=false, warnEmail=false, warnBankDetails=false
-  JSON: {"message": <validated_text>}
+POST api.kleinanzeigen.de/api/users/{uid}/conversations
+  JSON: {"message": <validated_text>, "adId": "<listing_id>", "contactName": <effective_name>}
+  -> 200 {"conversationId": "<opaque id>", "existing": <bool>}
+PUT gateway.kleinanzeigen.de/messagebox/api/users/{uid}/conversations/{id}?contentWarnings=true
+  -> read-back only: confirm the stored message, never used to send
 ```
 
-**must-verify-live:** prove the create-response identifier path, whether create reuses an existing thread, whether create alone contacts/notifies the seller, and whether the subsequent reply actually delivers the composed first message. Do not confuse the library docstring “first message” with a transmitted text payload. Until fixture evidence exists, accept only a validated documented response-ID shape in the adapter; unknown shape returns `PARTIAL_WRITE` with phase `conversation_created_id_unresolved`, `create_acknowledged=true`, and instructions to inspect the inbox. Never try speculative response fields or issue a second create to recover.
+`adId` must be a JSON **string**; `contactName` is mandatory (without it the API answers `400 "Bitte gib deinen Namen ein."`). This single call both opens the thread and stores the text. The older `create-conversation` + `reply` pair is not used: the gateway does not know the id it returns, reading it answers 404, and the text is never stored. Delivery is claimed only when the read-back shows an `OUTBOUND` message equal to the sent text (NFC-normalized); otherwise the call fails as `PARTIAL_WRITE` with phase `conversation_created_message_unverified`.
 
 Workflow under the lock:
 
 1. Validate text/name/IDs before any account mutation. Read current listing context (cached detail allowed); reject known own-ad contact, missing/removed ad, or mismatched explicit thread. If listing ownership cannot be established, do not invent it; upstream may reject self-contact. Tool instructions require the agent to have read the listing and compose from observed facts.
-2. If explicit `conversation_id` is present, verify its listing/role and send once. Otherwise create once with contactName, validate the returned ID, and send once using `reply()`.
-3. If create clearly fails before delivery, return its error. If create times out/5xx or its response is malformed after acknowledgment, return `WRITE_OUTCOME_UNKNOWN`/`PARTIAL_WRITE`; don't automatically resend/create. If reply fails after creation, include `conversation_id`, `conversation_created=true`, and `message_status="not_sent"` only when definitely rejected, otherwise `"unknown"`.
+2. If explicit `conversation_id` is present, verify its listing/role and send once. Otherwise send once through the conversations-collection call (`message` + `adId` + `contactName`), which opens the thread and stores the text, then read the thread back to confirm delivery.
+3. If the send clearly fails before delivery, return its error. If it times out/5xx or its response is malformed after acknowledgment, return `WRITE_OUTCOME_UNKNOWN`/`PARTIAL_WRITE`; don't automatically resend/create. When the thread cannot be read back or does not carry our text, return `PARTIAL_WRITE` with `conversation_id`, `conversation_created=true`, `message_status="unknown"` and phase `conversation_created_message_unverified`.
 4. A retry is a separate deliberate action: inspect the thread and use `kleinanzeigen_reply` or pass the known thread ID. An in-memory completion record keyed by `(listing_id, normalized_text)` for 10 minutes may warn about a repeat; it must not claim durable deduplication or replace upstream inspection. V1 needs no persistent sent-message database and no invented idempotency header.
 
 The first-message feature remains a required release capability; failed verification blocks promotion, not quiet removal from scope.

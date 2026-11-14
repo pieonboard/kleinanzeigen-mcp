@@ -9,7 +9,7 @@
 ![CI](https://github.com/pieonboard/kleinanzeigen-mcp/actions/workflows/ci.yml/badge.svg)
 ![Status](https://img.shields.io/badge/status-pre--release-orange)
 
-> Pre-release. Search, images, messaging and ad management are implemented, and the read surface has been run against the real API in a read-only smoke test ([record](docs/validation-2026-10-16.md)). Live write verification (first contact, ad update, renewal) is the remaining step, so treat the write tools as experimental. Offline tests, lint, types and the live read smoke are green.
+> Pre-release. Search, images, messaging and ad management are implemented, and the read surface has been run against the real API in a read-only smoke test ([record](docs/validation-2026-10-16.md)). First contact is now live-verified end to end ([record](docs/validation-2026-11-14-first-contact.md)); ad update and renewal are the remaining live write checks, so treat those two as experimental. Offline tests, lint, types and the live smoke are green.
 
 ## Contents
 
@@ -65,7 +65,7 @@ It is built for one user, low volume and writes that stay under human approval. 
 | `kleinanzeigen_get_conversation` | Open a thread once and return compacted history with local pagination |
 | `kleinanzeigen_get_messages` | Alias for loading a thread |
 | `kleinanzeigen_mark_read` | Mark one or more threads read in a single POST |
-| `kleinanzeigen_contact_seller` | First contact on an ad: create the conversation, send your text once, or reuse a known thread. Ambiguous outcomes keep their recovery context |
+| `kleinanzeigen_contact_seller` | First contact on an ad: one call opens the thread and stores your text, then the tool reads it back to prove delivery; or reuse a known thread. Ambiguous outcomes keep their recovery context |
 | `kleinanzeigen_reply` | Send a reply in an existing thread, once |
 
 ### Owned ads (account)

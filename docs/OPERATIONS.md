@@ -184,21 +184,20 @@ and reopens the thread; offsets may shift. upstream_history_complete stays null.
 
 contact_seller validates text/name/IDs and reads listing context before mutation.
 Known own/removed ads are rejected. A new contact performs exactly one
-create-conversation POST with contactName only, then one reply POST with the
-validated text in JSON. The sole accepted create-ID shape is **top-level `id`**
-(an opaque string or integer normalized to a string). `create_conversation.json`
-is a synthetic contract fixture, **not observed API evidence**. Replace it with a sanitized fixture
-verified against the live API; no speculative nested or alternate ID lookup is
-implemented. Creation may reuse a remote thread or notify the seller: neither
-behavior nor actual first-message delivery is established by these mocks.
+`POST api.kleinanzeigen.de/api/users/{uid}/conversations` with
+`{"message": …, "adId": "<listing id>", "contactName": …}` (the shape the Android
+client uses), then one read-back of the thread through the gateway to confirm the
+stored text. `adId` must be a JSON string and `contactName` is mandatory.
+The older create-conversation + reply pair is intentionally unused: the gateway
+does not know the id it returns, so the thread 404s and the text is never stored.
 
-An acknowledged create with an unusable ID/JSON returns PARTIAL_WRITE with
+An acknowledged send with an unusable ID/JSON returns PARTIAL_WRITE with
 phase=conversation_created_id_unresolved, create_acknowledged=true and
-message_status=not_sent. An ambiguous create returns WRITE_OUTCOME_UNKNOWN with
-phase=create_conversation and conversation_created=null. After acknowledged
-creation, any reply failure is PARTIAL_WRITE with phase=reply, the known
-conversation_id, conversation_created=true, and message_status=not_sent for a
-definite rejection/pre-wire failure or unknown for a possibly delivered send.
+message_status=not_sent. An ambiguous send returns WRITE_OUTCOME_UNKNOWN with
+phase=create_conversation and conversation_created=null. When the read-back fails
+or the thread does not carry our text, the result is PARTIAL_WRITE with
+phase=conversation_created_message_unverified, the known conversation_id,
+conversation_created=true and message_status=unknown.
 cause_code retains the underlying typed error. These errors never permit automatic
 replay. Inspect the inbox, then recover via reply or deliberate contact_seller reuse
 with that ID. Reuse first opens the thread and requires the matching listing ID
