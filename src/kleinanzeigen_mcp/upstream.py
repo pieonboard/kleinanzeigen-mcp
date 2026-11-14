@@ -298,6 +298,23 @@ class ShippingKleinanzeigenAPI(KleinanzeigenAPI):
             )
         )
 
+    def reply_to_seller(self, ad_id: str, message: str, contact_name: str) -> dict[str, Any]:
+        """Create the conversation and store the first message in one call.
+
+        The Android client posts ReplyToSellerDetails to the account's
+        conversations collection on the API host; that call both opens the
+        thread and stores the text. The library's create-conversation endpoint
+        returns an id the message gateway does not know (reading it answers 404
+        and the text is never stored), so that pair is not used here.
+        """
+        with self.budget.operation():
+            response = self._request(
+                "POST",
+                f"{API_HOST}/api/users/{self.user_id}/conversations",
+                json={"message": message, "adId": ad_id, "contactName": contact_name},
+            )
+            return object_json(response)
+
     def post_ad(self, *, shipping_options: list[str] | None = None, **kwargs: Any) -> str:
         with self.budget.operation():
             self._posting_shipping_options = shipping_options or []

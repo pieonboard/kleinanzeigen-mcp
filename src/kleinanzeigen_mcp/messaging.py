@@ -11,6 +11,7 @@ from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from . import models as m
 from .discovery import Discovery, boolean, integer, number, numeric_id, text
+from .discovery import text as text_field
 from .upstream import Runtime
 
 JSON_LIMIT = 1024 * 1024
@@ -311,6 +312,12 @@ class Messaging:
                 conversation_created=True,
                 message_status="not_sent",
             )
+        if phase == "verify":
+            code = "PARTIAL_WRITE"
+            context.update(
+                phase="conversation_created_message_unverified",
+                message_status="unknown",
+            )
         if phase == "reply" and context.get("conversation_created") is True:
             code = "PARTIAL_WRITE"
         return m.DomainError(
@@ -377,21 +384,43 @@ class Messaging:
                             "INVALID_ARGUMENT",
                             hint="Reuse requires a matching listing_id and BUYER role.",
                         )
+                    phase = "reply"
+                    api.reply(conversation_id, content)
                 else:
                     phase = "create_conversation"
                     created = None
                     assert effective_name is not None  # Validated before entering the operation.
-                    body = api.start_conversation(listing_id, effective_name)
-                    created = True
-                    # Synthetic contract only: top-level id. No speculative fallback paths.
                     try:
-                        conversation_id = opaque_id(
-                            body.get("id") if isinstance(body, dict) else None
-                        )
+                        body = api.reply_to_seller(listing_id, content, effective_name)
+                    except m.DomainError as exc:
+                        # An unparseable acknowledgement may still have created the
+                        # thread and stored the text: never report it as unsent.
+                        if exc.detail.code == "UPSTREAM_SCHEMA":
+                            raise m.DomainError("PARTIAL_WRITE") from None
+                        raise
+                    try:
+                        conversation_id = opaque_id(body.get("conversationId") or body.get("id"))
                     except m.DomainError:
                         raise m.DomainError("PARTIAL_WRITE") from None
-                phase = "reply"
-                api.reply(conversation_id, content)
+                    created = True
+                    # One call opens the thread and stores the text, so delivery is
+                    # only claimed after the thread reads back with our message.
+                    phase = "verify"
+                    try:
+                        _, rows = opened_thread(api.conversation(conversation_id), conversation_id)
+                    except m.DomainError:
+                        raise m.DomainError("PARTIAL_WRITE") from None
+                    if not any(
+                        (text_field(row.get("boundness") or row.get("direction")) or "").upper()
+                        == "OUTBOUND"
+                        and unicodedata.normalize(
+                            "NFC",
+                            (text_field(row.get("text") or row.get("textShort")) or "").strip(),
+                        )
+                        == unicodedata.normalize("NFC", content)
+                        for row in rows
+                    ):
+                        raise m.DomainError("PARTIAL_WRITE")
                 now = self.runtime.budget.clock()
                 self.completed = {
                     key: expiry for key, expiry in self.completed.items() if expiry > now
