@@ -301,6 +301,11 @@ def register_tools(server: FastMCP, services: Services, *, enable_analysis: bool
         """Bounded get category filters."""
         return call("get_category_filters", locals(), m.FiltersResult)
 
+    @tool(output_schema=output_schema(m.PostingMetadata), annotations=RL, run_in_thread=True)
+    def kleinanzeigen_get_posting_metadata(category_id: NumericID) -> ToolResult:
+        """Posting fields and allowed values for a category; read it before create_ad."""
+        return call("get_posting_metadata", locals(), m.PostingMetadata)
+
     @tool(output_schema=output_schema(m.ConversationsResult), annotations=R, run_in_thread=True)
     def kleinanzeigen_list_conversations(
         page: PageNumber = 0,
@@ -438,6 +443,11 @@ def register_tools(server: FastMCP, services: Services, *, enable_analysis: bool
     def kleinanzeigen_watchlist(page: PageNumber = 0, page_size: PageSize = 25) -> ToolResult:
         """Bounded watchlist."""
         return call("watchlist", locals(), m.ListingPage)
+
+    @tool(output_schema=output_schema(m.WatchlistEdit), annotations=W, run_in_thread=True)
+    def kleinanzeigen_set_watchlist(listing_id: NumericID, saved: bool) -> ToolResult:
+        """Add to or remove from the watchlist, then verify by reading it back."""
+        return call("set_watchlist", locals(), m.WatchlistEdit)
 
     @tool(output_schema=output_schema(m.ExtendResult), annotations=R, run_in_thread=True)
     def kleinanzeigen_extend_status(

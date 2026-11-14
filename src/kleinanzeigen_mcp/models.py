@@ -298,6 +298,35 @@ class FiltersResult(Success):
     attributes: list[AttributeFilter]
 
 
+class PostingValue(StrictModel):
+    value: str
+    label: str | None = None
+
+
+class PostingAttribute(StrictModel):
+    name: str
+    label: str | None = None
+    type: str | None = None
+    render: str | None = None
+    required: bool
+    values: list[PostingValue]
+
+
+class PostingMetadata(Success):
+    category_id: str
+    price_required: bool | None
+    price_types: list[PostingValue]
+    attribute_count: int
+    truncated: bool
+    attributes: list[PostingAttribute]
+
+
+class WatchlistEdit(Success):
+    listing_id: str
+    saved: bool
+    verified: bool
+
+
 class Conversation(StrictModel):
     conversation_id: str
     listing_id: str | None

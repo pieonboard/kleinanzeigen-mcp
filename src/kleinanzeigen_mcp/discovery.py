@@ -395,6 +395,69 @@ def locations(data: dict[str, Any]) -> list[m.LocationMatch]:
     return out
 
 
+def _posting_values(node: Any) -> list[m.PostingValue]:
+    items = node
+    if isinstance(items, dict):
+        items = items.get("supported-value")
+    if isinstance(items, dict):
+        items = [items]
+    out: list[m.PostingValue] = []
+    for item in items or []:
+        # Do not run these entries through value(): their own "value" key is the enum.
+        if not isinstance(item, dict):
+            continue
+        raw = item.get("value")
+        if not isinstance(raw, str) or not raw:
+            continue
+        label = item.get("localized-label")
+        out.append(m.PostingValue(value=raw, label=label if isinstance(label, str) else None))
+    return out
+
+
+POSTING_ATTRIBUTE_LIMIT = 200
+
+
+def posting_metadata(raw: dict[str, Any], category_id: str) -> m.PostingMetadata:
+    """Normalize the public posting schema; unknown shapes are an upstream error."""
+    ad = envelope(raw, "ad")
+    attributes_node = ad.get("attributes")
+    if not isinstance(attributes_node, dict):
+        raise DomainError("UPSTREAM_SCHEMA")
+    items = attributes_node.get("attribute")
+    if items is None:
+        items = []
+    if isinstance(items, dict):
+        items = [items]
+    if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+        raise DomainError("UPSTREAM_SCHEMA")
+    parsed: list[m.PostingAttribute] = []
+    for item in items:
+        name = text(item.get("name"))
+        if name is None:
+            continue
+        parsed.append(
+            m.PostingAttribute(
+                name=name,
+                label=text(item.get("localized-label")),
+                type=text(item.get("type")),
+                render=text(item.get("render")),
+                # `write` is the only published signal for a mandatory field.
+                required=(text(item.get("write")) or "").lower() == "required",
+                values=_posting_values(item),
+            )
+        )
+    price = obj(ad.get("price"))
+    price_type = price.get("price-type")
+    return m.PostingMetadata(
+        category_id=category_id,
+        price_required=(text(price.get("write")) or "").lower() == "required",
+        price_types=_posting_values(price_type),
+        attribute_count=len(parsed),
+        truncated=len(parsed) > POSTING_ATTRIBUTE_LIMIT,
+        attributes=parsed[:POSTING_ATTRIBUTE_LIMIT],
+    )
+
+
 class Discovery:
     def __init__(self, runtime: Runtime):
         self.runtime = runtime
@@ -452,6 +515,12 @@ class Discovery:
         cid = resolve(category)
         with self.runtime.operation(tool_name="kleinanzeigen_get_category_filters"):
             return self._filters(cid)
+
+    def get_posting_metadata(self, category_id: str) -> m.PostingMetadata:
+        with self.runtime.operation(tool_name="kleinanzeigen_get_posting_metadata"):
+            return posting_metadata(
+                self.runtime.public().posting_metadata_raw(category_id), category_id
+            )
 
     def _locations(self, query: str) -> list[m.LocationMatch]:
         cached = self.places.get(query.casefold())

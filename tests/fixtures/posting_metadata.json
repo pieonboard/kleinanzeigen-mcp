@@ -1,0 +1,197 @@
+{
+  "{http://www.ebayclassifiedsgroup.com/schema/ad/v1}ad": {
+    "value": {
+      "price": {
+        "price-type": {
+          "supported-value": [
+            {
+              "value": "FREE",
+              "localized-label": "Zu verschenken"
+            },
+            {
+              "value": "PLEASE_CONTACT",
+              "localized-label": "VB"
+            },
+            {
+              "value": "SPECIFIED_AMOUNT",
+              "localized-label": "Festpreis"
+            }
+          ]
+        },
+        "write": "required"
+      },
+      "attributes": {
+        "attribute": [
+          {
+            "supported-value": [
+              {
+                "value": "ja",
+                "localized-label": "Versand möglich"
+              },
+              {
+                "value": "nein",
+                "localized-label": "Nur Abholung"
+              }
+            ],
+            "range-value": {},
+            "hint-paragraphs": [],
+            "name": "lampen_licht.versand",
+            "unit": "",
+            "search-display": "true",
+            "fake-sub-category": "false",
+            "search-multi-select": "false",
+            "localized-tag": "Versand möglich",
+            "render": "DROPDOWN",
+            "read": "supported",
+            "write": "required",
+            "search-response-included": "unsupported",
+            "type": "ENUM",
+            "localized-label": "Versand",
+            "since": "1.0",
+            "deprecated": "false",
+            "search-param": "optional",
+            "search-style": "eq"
+          },
+          {
+            "supported-value": [
+              {
+                "value": "beige",
+                "localized-label": "Beige"
+              },
+              {
+                "value": "blau",
+                "localized-label": "Blau"
+              },
+              {
+                "value": "braun",
+                "localized-label": "Braun"
+              },
+              {
+                "value": "bunt",
+                "localized-label": "Bunt"
+              },
+              {
+                "value": "burgunderrot",
+                "localized-label": "Burgunderrot"
+              },
+              {
+                "value": "gelb",
+                "localized-label": "Gelb"
+              },
+              {
+                "value": "gold",
+                "localized-label": "Gold"
+              },
+              {
+                "value": "grau",
+                "localized-label": "Grau"
+              },
+              {
+                "value": "grün",
+                "localized-label": "Grün"
+              },
+              {
+                "value": "holz",
+                "localized-label": "Holz"
+              },
+              {
+                "value": "khaki",
+                "localized-label": "Khaki"
+              },
+              {
+                "value": "lila",
+                "localized-label": "Lila"
+              },
+              {
+                "value": "orange",
+                "localized-label": "Orange"
+              },
+              {
+                "value": "rosa",
+                "localized-label": "Rosa"
+              },
+              {
+                "value": "rot",
+                "localized-label": "Rot"
+              },
+              {
+                "value": "schwarz",
+                "localized-label": "Schwarz"
+              },
+              {
+                "value": "silber",
+                "localized-label": "Silber"
+              },
+              {
+                "value": "transparent",
+                "localized-label": "Transparent"
+              },
+              {
+                "value": "weiß",
+                "localized-label": "Weiß"
+              },
+              {
+                "value": "sonstige",
+                "localized-label": "Andere Farben"
+              }
+            ],
+            "range-value": {},
+            "hint-paragraphs": [],
+            "name": "lampen_licht.color",
+            "unit": "",
+            "search-display": "false",
+            "fake-sub-category": "false",
+            "search-multi-select": "true",
+            "render": "DROPDOWN",
+            "read": "supported",
+            "write": "optional",
+            "search-response-included": "unsupported",
+            "type": "ENUM",
+            "localized-label": "Farbe",
+            "since": "1.0",
+            "deprecated": "false",
+            "search-param": "optional",
+            "search-style": "eq"
+          },
+          {
+            "supported-value": [
+              {
+                "value": "new",
+                "localized-label": "Neu"
+              },
+              {
+                "value": "like_new",
+                "localized-label": "Sehr Gut"
+              },
+              {
+                "value": "ok",
+                "localized-label": "Gut"
+              },
+              {
+                "value": "alright",
+                "localized-label": "In Ordnung"
+              }
+            ],
+            "range-value": {},
+            "hint-paragraphs": [],
+            "name": "lampen_licht.condition",
+            "unit": "",
+            "search-display": "false",
+            "fake-sub-category": "false",
+            "search-multi-select": "true",
+            "render": "DROPDOWN",
+            "read": "supported",
+            "write": "optional",
+            "search-response-included": "unsupported",
+            "type": "ENUM",
+            "localized-label": "Zustand",
+            "since": "1.0",
+            "deprecated": "false",
+            "search-param": "optional",
+            "search-style": "eq"
+          }
+        ]
+      }
+    }
+  }
+}
