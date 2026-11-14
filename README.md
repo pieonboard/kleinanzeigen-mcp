@@ -43,7 +43,7 @@ It is built for one user, low volume and writes that stay under human approval. 
 
 ## Tools
 
-24 tools, all prefixed `kleinanzeigen_`. Read tools carry `readOnlyHint`. Write tools are annotated as destructive or idempotent so a client can gate them under its own approval policy.
+26 tools, all prefixed `kleinanzeigen_`. Read tools carry `readOnlyHint`. Write tools are annotated as destructive or idempotent so a client can gate them under its own approval policy.
 
 ### Discovery (public)
 
@@ -56,6 +56,7 @@ It is built for one user, low volume and writes that stay under human approval. 
 | `kleinanzeigen_search_locations` | Location and region lookup for search and radius filters |
 | `kleinanzeigen_list_categories` | Browse the bundled category tree (offline, 159 nodes) |
 | `kleinanzeigen_get_category_filters` | Category-specific attribute filters read from the server's own schema |
+| `kleinanzeigen_get_posting_metadata` | Posting schema for a category: required fields, allowed values, price types. Read it before `create_ad` instead of guessing attribute keys |
 
 ### Inbox and messaging (account)
 
@@ -78,11 +79,12 @@ It is built for one user, low volume and writes that stay under human approval. 
 | `kleinanzeigen_pause_ad` · `kleinanzeigen_activate_ad` | Set the desired state of an ad |
 | `kleinanzeigen_renew_ad` | Extension check and extend. Blocked until the eligibility mapping has been confirmed live |
 | `kleinanzeigen_delete_ad` | Permanent, destructive delete |
+| `kleinanzeigen_set_watchlist` | Add one ad to the saved list or remove it, then prove the change by reading the list back |
 | `kleinanzeigen_upload_picture` | Upload a local image and return the hosted URL for create or update |
 | `kleinanzeigen_watchlist` | Your saved ads |
 | `kleinanzeigen_extend_status` | Per-ad extension eligibility with status and date |
 
-A 25th tool, `kleinanzeigen_analyze_listings`, applies local heuristics to listings you pass in. It is experimental and stays unregistered unless you set `KA_ENABLE_ANALYSIS=true`.
+A 27th tool, `kleinanzeigen_analyze_listings`, applies local heuristics to listings you pass in. It is experimental and stays unregistered unless you set `KA_ENABLE_ANALYSIS=true`.
 
 ## Quick start
 

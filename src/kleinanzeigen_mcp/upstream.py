@@ -286,6 +286,34 @@ class ShippingKleinanzeigenAPI(KleinanzeigenAPI):
                 )
             )
 
+    def posting_metadata_raw(self, category_id: str) -> dict[str, Any]:
+        """Public posting schema for a category (attributes, prices, dependencies)."""
+        return object_json(
+            self._get(
+                f"{API_HOST}/api/ads/metadata/{category_id}.json",
+                params={"_in": "attributes,price,dependent-attributes"},
+            )
+        )
+
+    def add_watchlist(self, ad_id: str) -> None:
+        # The client sends a form field, not a query parameter (UserFavoriteApiCommands).
+        with self.budget.operation():
+            self._request(
+                "POST",
+                f"{API_HOST}/api/users/{self.user_id}/watchlist.json",
+                params={"_in": "id"},
+                data=f"ids={ad_id}",
+                content_type="application/x-www-form-urlencoded",
+            )
+
+    def remove_watchlist(self, ad_id: str) -> None:
+        with self.budget.operation():
+            self._request(
+                "DELETE",
+                f"{API_HOST}/api/users/{self.user_id}/watchlist.json",
+                params={"_in": "id", "ids": ad_id},
+            )
+
     def conversations_raw(self, page: int = 0, size: int = 100) -> dict[str, Any]:
         # M conversations() coerces unavailable unread fields to false/zero.
         # Retain its exact request and normalize the raw response in the service.

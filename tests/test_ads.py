@@ -546,3 +546,47 @@ async def test_renew_ad_negative_status_reports_date_and_never_extends(h):
     assert "CANNOT_BE_EXTENDED" in detail["hint"] and "25.11.2026" in detail["hint"]
     assert "No extension was attempted" in detail["hint"]
     assert len(h.raw.calls) == 1
+
+
+def watchlist_page(ids):
+    return {
+        "{http://www.ebayclassifiedsgroup.com/schema/ad/v1}ads": {
+            "value": {"paging": {"numFound": len(ids)}, "ad": [{"id": i} for i in ids]}
+        }
+    }
+
+
+async def test_set_watchlist_add_is_verified_by_presence(h):
+    h.responses(Response(), watchlist_page(["101"]))
+    result = await h.ok("set_watchlist", listing_id="101", saved=True)
+    assert result["verified"] is True and result["saved"] is True
+    write, read = h.raw.calls
+    assert write[1] == "POST"
+    assert write[2] == "https://api.kleinanzeigen.de/api/users/700/watchlist.json"
+    assert write[3]["params"] == {"_in": "id"}
+    assert write[3]["data"] == b"ids=101"
+    assert write[3]["headers"]["Content-Type"] == "application/x-www-form-urlencoded"
+    assert read[1] == "GET" and read[3]["params"]["page"] == 0
+
+
+async def test_set_watchlist_remove_is_verified_by_absence(h):
+    h.responses(Response(), watchlist_page(["202"]))
+    result = await h.ok("set_watchlist", listing_id="101", saved=False)
+    assert result["verified"] is True and result["saved"] is False
+    write = h.raw.calls[0]
+    assert write[1] == "DELETE" and write[3]["params"] == {"_in": "id", "ids": "101"}
+
+
+async def test_set_watchlist_contradiction_is_partial(h):
+    h.responses(Response(), watchlist_page(["202"]))
+    detail = await h.error("set_watchlist", "PARTIAL_WRITE", listing_id="101", saved=True)
+    assert "Inspect it before repeating" in detail["hint"]
+
+
+async def test_set_watchlist_incomplete_scan_never_proves_absence(h):
+    h.responses(Response())
+    for _ in range(5):
+        h.responses(watchlist_page([str(i) for i in range(1000, 1050)]))
+    detail = await h.error("set_watchlist", "WRITE_OUTCOME_UNKNOWN", listing_id="101", saved=True)
+    assert "did not reach the end" in detail["hint"]
+    assert len(h.raw.calls) == 6

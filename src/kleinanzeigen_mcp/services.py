@@ -25,6 +25,7 @@ class RuntimeServices:
             "search_locations",
             "list_categories",
             "get_category_filters",
+            "get_posting_metadata",
         }
     )
     ACCOUNT_READS = frozenset({"list_my_ads", "get_my_ad", "watchlist", "extend_status"})
@@ -37,6 +38,7 @@ class RuntimeServices:
             "renew_ad",
             "delete_ad",
             "upload_picture",
+            "set_watchlist",
         }
     )
     MESSAGING = frozenset(

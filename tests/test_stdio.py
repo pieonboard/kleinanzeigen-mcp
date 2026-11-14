@@ -110,6 +110,26 @@ SAMPLES = {
         {"category": "1"},
         {"category_id": "1", "global_parameters": [], "attributes": []},
     ),
+    "get_posting_metadata": (
+        {"category_id": "1"},
+        {
+            "category_id": "1",
+            "price_required": True,
+            "price_types": [{"value": "FIXED", "label": "Festpreis"}],
+            "attribute_count": 1,
+            "truncated": False,
+            "attributes": [
+                {
+                    "name": "versand",
+                    "label": "Versand",
+                    "type": "ENUM",
+                    "render": "DROPDOWN",
+                    "required": True,
+                    "values": [{"value": "ja", "label": "Versand möglich"}],
+                }
+            ],
+        },
+    ),
     "list_conversations": (
         {},
         {
@@ -164,6 +184,10 @@ SAMPLES = {
         {"ok": True, "action": "picture_uploaded", "url": "https://img.kleinanzeigen.de/test.png"},
     ),
     "watchlist": ({}, PAGE),
+    "set_watchlist": (
+        {"listing_id": "1", "saved": True},
+        {"listing_id": "1", "saved": True, "verified": True},
+    ),
     "extend_status": (
         {"listing_ids": ["1"]},
         {
@@ -278,7 +302,7 @@ async def test_all_fake_tools_stdio_schemas_errors_and_image():
     try:
         await initialize(p)
         tools = (await rpc(p, "tools/list", {}))["tools"]
-        assert len(tools) == 25
+        assert len(tools) == 27
         for tool in tools:
             name = tool["name"].removeprefix("kleinanzeigen_")
             arguments, expected = SAMPLES[name]
@@ -319,7 +343,7 @@ async def test_launchers_are_equivalent_without_startup_io(args):
     p = await start_process(args)
     try:
         await initialize(p)
-        assert len((await rpc(p, "tools/list", {}))["tools"]) == 24
+        assert len((await rpc(p, "tools/list", {}))["tools"]) == 26
     finally:
         await stop(p)
 

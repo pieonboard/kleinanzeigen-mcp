@@ -590,7 +590,7 @@ async def test_safe_smoke_runs_reviewed_reads_only_with_synthetic_fixtures(capsy
         code = await smoke_test.run(client, args)
     assert code == 0
     assert {name for name, _ in service.calls} == smoke_test.SAFE
-    assert len(service.calls) == 12
+    assert len(service.calls) == 13
     supplied = dict(service.calls)
     assert supplied["search"]["pages"] == supplied["search"]["page_size"] == 1
     assert supplied["search"]["summary_chars"] == 400
@@ -878,3 +878,30 @@ async def test_live_jaxb_empty_store_title_and_scalar_metadata_markers(h):
     keys = {p["key"] for p in filters["global_parameters"]}
     assert "histograms" not in keys and "histogramsExpand" not in keys
     assert "sortType" in keys
+
+
+def test_posting_metadata_parses_required_fields_and_values():
+    from kleinanzeigen_mcp.discovery import posting_metadata
+
+    parsed = posting_metadata(fixture("posting_metadata"), "82")
+    assert parsed.category_id == "82" and parsed.attribute_count == len(parsed.attributes) == 3
+    assert parsed.truncated is False and parsed.price_required is True
+    assert {p.value for p in parsed.price_types} == {"FREE", "PLEASE_CONTACT", "SPECIFIED_AMOUNT"}
+    versand = next(a for a in parsed.attributes if a.name == "lampen_licht.versand")
+    assert versand.required is True and versand.render == "DROPDOWN"
+    assert [v.value for v in versand.values] == ["ja", "nein"]
+    color = next(a for a in parsed.attributes if a.name == "lampen_licht.color")
+    assert color.required is False and len(color.values) > 3
+
+
+def test_posting_metadata_rejects_unknown_shape():
+    import pytest as _pytest
+
+    from kleinanzeigen_mcp.discovery import posting_metadata
+    from kleinanzeigen_mcp.models import DomainError
+
+    with _pytest.raises(DomainError) as exc:
+        posting_metadata(
+            {"{http://www.ebayclassifiedsgroup.com/schema/ad/v1}ad": {"value": {}}}, "82"
+        )
+    assert exc.value.detail.code == "UPSTREAM_SCHEMA"

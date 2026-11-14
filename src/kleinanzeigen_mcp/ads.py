@@ -62,6 +62,46 @@ class Ads:
         with self.runtime.operation(account=True, tool_name="kleinanzeigen_watchlist") as api:
             return self._page(api.watchlist_raw(page=page, size=page_size), page, page_size)
 
+    WATCHLIST_PAGE_SIZE = 50
+    WATCHLIST_MAX_PAGES = 5
+
+    def set_watchlist(self, listing_id: str, saved: bool) -> m.WatchlistEdit:
+        """Add or remove one ad, then prove the change by reading the list back."""
+        with self.runtime.operation(account=True, tool_name="kleinanzeigen_set_watchlist") as api:
+            if saved:
+                api.add_watchlist(listing_id)
+            else:
+                api.remove_watchlist(listing_id)
+            present, complete = self._watchlist_state(api, listing_id)
+            if present == saved:
+                return m.WatchlistEdit(listing_id=listing_id, saved=saved, verified=True)
+            if not complete:
+                raise m.DomainError(
+                    "WRITE_OUTCOME_UNKNOWN",
+                    hint=(
+                        "The watchlist scan did not reach the end, so the change is unproven. "
+                        "Open the watchlist before repeating."
+                    ),
+                )
+            raise m.DomainError(
+                "PARTIAL_WRITE",
+                hint=(
+                    "The watchlist does not reflect the requested change. "
+                    "Inspect it before repeating."
+                ),
+            )
+
+    @staticmethod
+    def _watchlist_state(api: Any, listing_id: str) -> tuple[bool, bool]:
+        """Return (is listed, scan complete); an incomplete scan never proves absence."""
+        for page in range(Ads.WATCHLIST_MAX_PAGES):
+            _, entries = ads_block(api.watchlist_raw(page=page, size=Ads.WATCHLIST_PAGE_SIZE))
+            if any(numeric_id(entry.get("id")) == listing_id for entry in entries):
+                return True, True
+            if len(entries) < Ads.WATCHLIST_PAGE_SIZE:
+                return False, True
+        return False, False
+
     @staticmethod
     def _page(raw: dict[str, Any], page: int, size: int) -> m.ListingPage:
         _, ads = ads_block(raw)

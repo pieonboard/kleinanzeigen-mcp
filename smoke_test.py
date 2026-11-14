@@ -29,6 +29,7 @@ SAFE = frozenset(
         "search_locations",
         "list_categories",
         "get_category_filters",
+        "get_posting_metadata",
         "list_my_ads",
         "get_my_ad",
         "list_conversations",
@@ -50,6 +51,7 @@ WRITES = frozenset(
         "renew_ad",
         "delete_ad",
         "upload_picture",
+        "set_watchlist",
     }
 )
 ACCOUNT = frozenset(
@@ -63,10 +65,12 @@ MODELS = {
     "search_locations": m.LocationsResult,
     "list_categories": m.CategoriesResult,
     "get_category_filters": m.FiltersResult,
+    "get_posting_metadata": m.PostingMetadata,
     "list_my_ads": m.ListingPage,
     "get_my_ad": m.Listing,
     "list_conversations": m.ConversationsResult,
     "watchlist": m.ListingPage,
+    "set_watchlist": m.WatchlistEdit,
     "extend_status": m.ExtendResult,
     "analyze_listings": m.AnalysisResult,
 }
@@ -159,7 +163,9 @@ async def run(client: Client, args: argparse.Namespace) -> int:
         return data
 
     await call("list_categories", limit=1)
-    await call("get_category_filters", category=args.category)
+    filters = await call("get_category_filters", category=args.category)
+    if filters and filters.get("category_id"):
+        await call("get_posting_metadata", category_id=filters["category_id"])
     await call("search_locations", query=args.location_query, limit=1)
     search = await call(
         "search", query=args.query, category=args.category, pages=1, page_size=1, summary_chars=400

@@ -253,3 +253,20 @@ First-contact delivery, thread loaded/unread effects, renewal eligibility,
 profile/IP behavior and host image ingestion remain live-verification items.
 No live marketplace API, login flow or real token was used for the offline checks. The runner
 is tested with injected fake services; its live entry point was not run.
+
+## Posting schema and watchlist writes (2026-11-14)
+
+`get_posting_metadata(category_id)` reads the public posting schema
+(`GET /api/ads/metadata/{categoryId}.json?_in=attributes,price,dependent-attributes`)
+and normalizes it into required flags, allowed enum values and price types. It is a
+read on the public path: no cache, no account state, no mutation. The schema is the
+server's own answer, not a reconstruction; unknown shapes raise `UPSTREAM_SCHEMA`
+instead of returning an empty field list.
+
+`set_watchlist(listing_id, saved)` is one write plus a proof. The client's wire shapes
+are used exactly: `POST .../watchlist.json?_in=id` with the form field `ids` to add,
+`DELETE .../watchlist.json?_in=id&ids=<id>` to remove. Afterwards the tool scans the
+saved list (up to 5 pages of 50) and only reports `verified: true` when the target's
+presence matches the request. A complete scan that contradicts the write is
+`PARTIAL_WRITE`; a scan that never reaches the end proves nothing and returns
+`WRITE_OUTCOME_UNKNOWN`. Neither error permits an automatic replay.

@@ -32,7 +32,7 @@ HISTORICAL = {
 
 
 async def test_inventory_schemas_annotations_and_no_startup_io():
-    for enabled, count in [(False, 24), (True, 25)]:
+    for enabled, count in [(False, 26), (True, 27)]:
         async with Client(create_server(settings=Settings(enable_analysis=enabled))) as client:
             tools = await client.list_tools()
             assert len(tools) == count
@@ -190,10 +190,12 @@ async def test_historical_parameters_and_all_annotation_tuples():
         "delete_ad": "listing_id",
         "upload_picture": "image_path filename content_type",
         "watchlist": "page page_size",
+        "get_posting_metadata": "category_id",
+        "set_watchlist": "listing_id saved",
     }
-    local = {"list_categories", "analyze_listings"}
+    local = {"list_categories", "analyze_listings", "get_posting_metadata"}
     state = {"pause_ad", "activate_ad", "mark_read", "get_conversation", "get_messages"}
-    writes = {"contact_seller", "reply", "create_ad", "upload_picture", "renew_ad"}
+    writes = {"contact_seller", "reply", "create_ad", "upload_picture", "renew_ad", "set_watchlist"}
     destructive = {"update_ad", "delete_ad"}
     async with Client(create_server(settings=Settings(enable_analysis=True))) as client:
         for t in await client.list_tools():
