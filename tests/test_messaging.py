@@ -374,18 +374,18 @@ async def test_reuse_must_match_listing_and_buyer_role_before_send(h, changes, c
 
 
 @pytest.mark.parametrize(
-    "response,code,created",
+    "response,code,created,status",
     [
-        (Response(400), "INVALID_ARGUMENT", False),
-        (Response(401), "AUTH_EXPIRED", False),
-        (Response(403), "AUTH_OR_PERMISSION_DENIED", False),
-        (Response(404), "NOT_FOUND", False),
-        (Response(429), "RATE_LIMITED", False),
-        (Response(503), "WRITE_OUTCOME_UNKNOWN", None),
-        (OSError("private upstream body"), "WRITE_OUTCOME_UNKNOWN", None),
+        (Response(400), "INVALID_ARGUMENT", False, "not_sent"),
+        (Response(401), "AUTH_EXPIRED", False, "not_sent"),
+        (Response(403), "AUTH_OR_PERMISSION_DENIED", False, "not_sent"),
+        (Response(404), "NOT_FOUND", False, "not_sent"),
+        (Response(429), "RATE_LIMITED", False, "not_sent"),
+        (Response(503), "WRITE_OUTCOME_UNKNOWN", None, "unknown"),
+        (OSError("private upstream body"), "WRITE_OUTCOME_UNKNOWN", None, "unknown"),
     ],
 )
-async def test_create_failure_no_send_no_replay_retains_context(h, response, code, created):
+async def test_create_failure_no_send_no_replay_retains_context(h, response, code, created, status):
     h.responses(listing(), response)
     detail = await h.error(
         "contact_seller", code, listing_id="101", text="Hallo", contact_name="Synthetic"
@@ -393,7 +393,7 @@ async def test_create_failure_no_send_no_replay_retains_context(h, response, cod
     assert detail["retryable"] is False
     ctx = detail["context"]
     assert ctx["listing_id"] == "101" and ctx["phase"] == "create_conversation"
-    assert ctx["conversation_created"] is created and ctx["message_status"] == "not_sent"
+    assert ctx["conversation_created"] is created and ctx["message_status"] == status
     assert len(h.raw.calls) == 2
 
 
