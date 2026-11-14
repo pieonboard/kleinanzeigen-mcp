@@ -24,6 +24,26 @@ def listing(**changes):
     return {"id": "101", "title": "Synthetic lamp", "user-id": "999", **changes}
 
 
+def sent_thread(cid="thread-created-synthetic", text="Hallo", **changes):
+    """A gateway thread that already carries the first message we sent."""
+    return {
+        **fixture("thread"),
+        "id": cid,
+        "adId": 101,
+        "messages": [
+            {
+                "messageId": "message-sent",
+                "boundness": "OUTBOUND",
+                "receivedDate": "2026-10-15T12:00:00+02:00",
+                "text": text,
+                "type": "TEXT",
+                "attachments": [],
+            }
+        ],
+        **changes,
+    }
+
+
 class Harness:
     def __init__(self, tmp_path, **settings):
         self.clock = Clock()
@@ -239,28 +259,29 @@ async def test_mark_read_deduplicates_one_post_and_no_per_id_ack(h):
     }
 
 
-async def test_first_contact_exact_create_name_then_reply_text(h):
-    h.responses(listing(), fixture("create_conversation"), Response(204))
+async def test_first_contact_sends_message_and_reads_it_back(h):
+    h.responses(
+        listing(),
+        {"conversationId": "thread-created-synthetic", "existing": False},
+        sent_thread(text="Hallo ä!\n\tGrüße"),
+    )
     result = await h.ok(
         "contact_seller", listing_id="101", text="  Hallo ä!\n\tGrüße  ", contact_name="P & Ä?"
     )
     assert result["conversation_created"] is result["message_sent"] is True
     assert result["conversation_id"] == "thread-created-synthetic" and "message_id" not in result
-    read, create, reply = h.raw.calls
+    read, create, verify = h.raw.calls
     assert read[1] == "GET" and "X-EBAYK-USERID-TOKEN" not in read[3]["headers"]
-    assert (
-        create[1] == "POST"
-        and create[2] == "https://api.kleinanzeigen.de/api/users/700/create-conversation/101"
-    )
-    assert create[3]["params"] == {"contactName": "P & Ä?"}
-    assert create[3]["json"] is create[3]["data"] is None
-    assert reply[1] == "POST" and reply[2].endswith("/conversations/thread-created-synthetic")
-    assert reply[3]["params"] == {
-        "warnPhoneNumber": "false",
-        "warnEmail": "false",
-        "warnBankDetails": "false",
+    assert create[1] == "POST"
+    assert create[2] == "https://api.kleinanzeigen.de/api/users/700/conversations"
+    assert create[3]["json"] == {
+        "message": "Hallo ä!\n\tGrüße",
+        "adId": "101",
+        "contactName": "P & Ä?",
     }
-    assert reply[3]["json"] == {"message": "Hallo ä!\n\tGrüße"}
+    assert create[3]["params"] is None and create[3]["data"] is None
+    assert verify[1] == "PUT" and verify[2].endswith("/conversations/thread-created-synthetic")
+    assert verify[3]["params"] == {"contentWarnings": "true"}
     assert all(b[0] - a[0] >= 1.5 for a, b in zip(h.raw.calls, h.raw.calls[1:], strict=False))
 
 
@@ -268,10 +289,10 @@ async def test_config_contact_name_and_cached_listing(h):
     h.runtime.settings = h.settings.model_copy(update={"contact_name": "Configured name"})
     h.responses(listing())
     await h.ok("get_listing", listing_id="101")
-    h.responses({"id": 12345}, Response())
+    h.responses({"conversationId": "12345"}, sent_thread(cid="12345", text="Hello"))
     result = await h.ok("contact_seller", listing_id="101", text="Hello")
     assert result["conversation_id"] == "12345"
-    assert h.raw.calls[1][3]["params"] == {"contactName": "Configured name"}
+    assert h.raw.calls[1][3]["json"]["contactName"] == "Configured name"
     assert len(h.raw.calls) == 3
 
 
@@ -381,7 +402,6 @@ async def test_create_failure_no_send_no_replay_retains_context(h, response, cod
     [
         {},
         {"data": {"id": "speculative"}},
-        {"conversationId": "speculative"},
         {"id": ""},
         {"id": "../invalid"},
         {"id": True},
@@ -406,29 +426,26 @@ async def test_acknowledged_create_unknown_id_is_partial_and_never_guessed(h, bo
 
 
 @pytest.mark.parametrize(
-    "response,status",
+    "response",
     [
-        (Response(400), "not_sent"),
-        (Response(401), "not_sent"),
-        (Response(403), "not_sent"),
-        (Response(404), "not_sent"),
-        (Response(429), "not_sent"),
-        (Response(500), "unknown"),
-        (Response(502), "unknown"),
-        (OSError("secret"), "unknown"),
+        Response(404),
+        Response(500),
+        Response(502),
+        OSError("secret"),
+        sent_thread(text="Someone else wrote this"),
+        {**sent_thread(), "messages": []},
     ],
 )
-async def test_second_phase_failure_preserves_created_thread_for_recovery(h, response, status):
-    h.responses(listing(), fixture("create_conversation"), response)
+async def test_send_with_unreadable_or_mismatched_thread_is_partial(h, response):
+    h.responses(listing(), {"conversationId": "thread-created-synthetic"}, response)
     detail = await h.error(
         "contact_seller", "PARTIAL_WRITE", listing_id="101", text="Hallo", contact_name="Synthetic"
     )
     ctx = detail["context"]
-    assert ctx["phase"] == "reply" and ctx["conversation_id"] == "thread-created-synthetic"
-    assert ctx["conversation_created"] is True and ctx["message_status"] == status
+    assert ctx["phase"] == "conversation_created_message_unverified"
+    assert ctx["conversation_id"] == "thread-created-synthetic"
+    assert ctx["conversation_created"] is True and ctx["message_status"] == "unknown"
     assert detail["retryable"] is False and len(h.raw.calls) == 3
-    if response.__class__ is Response and response.status_code == 401:
-        assert h.runtime._auth_failed is True
 
 
 async def test_reused_thread_unknown_send_preserves_context_without_claiming_creation(h):
@@ -477,7 +494,9 @@ async def test_repeat_contact_warning_is_normalized_key_ten_minute_memory_only(h
     ]:
         if not h.raw.calls:
             h.responses(listing())
-        h.responses(fixture("create_conversation"), Response())
+        h.responses(
+            {"conversationId": "thread-created-synthetic"}, sent_thread(text=content.strip())
+        )
         result = await h.ok(
             "contact_seller", listing_id="101", text=content, contact_name="Synthetic"
         )
@@ -485,9 +504,11 @@ async def test_repeat_contact_warning_is_normalized_key_ten_minute_memory_only(h
         if warning:
             assert result["warnings"][0]["context"]["repeat_contact"] is True
             assert "no durable deduplication" in result["warnings"][0]["hint"]
-    assert len([c for c in h.raw.calls if c[1] == "POST"]) == 6
+    assert len([c for c in h.raw.calls if c[1] == "POST"]) == 3
     h.clock.now += 601
-    h.responses(listing(), fixture("create_conversation"), Response())
+    h.responses(
+        listing(), {"conversationId": "thread-created-synthetic"}, sent_thread(text="Hallo Grüße")
+    )
     expired = await h.ok(
         "contact_seller", listing_id="101", text="Hallo Grüße", contact_name="Synthetic"
     )
@@ -526,8 +547,11 @@ async def test_invalid_pagination_ids_and_text_do_not_mutate(h, name, args):
     assert not h.raw.calls
 
 
-@pytest.mark.parametrize("timeout,created,calls", [(1, False, 1), (3, True, 2)])
-async def test_deadline_before_wire_preserves_definitely_unsent_state(h, timeout, created, calls):
+@pytest.mark.parametrize(
+    "timeout,created,calls,status",
+    [(1, False, 1, "not_sent"), (3, True, 2, "unknown")],
+)
+async def test_deadline_before_wire_preserves_write_state(h, timeout, created, calls, status):
     h.runtime.budget.operation_timeout = timeout
     h.responses(listing(), fixture("create_conversation"), Response())
     code = "PARTIAL_WRITE" if created else "UPSTREAM_UNAVAILABLE"
@@ -535,20 +559,24 @@ async def test_deadline_before_wire_preserves_definitely_unsent_state(h, timeout
         "contact_seller", code, listing_id="101", text="Hallo", contact_name="Synthetic"
     )
     ctx = detail["context"]
-    assert ctx["conversation_created"] is created and ctx["message_status"] == "not_sent"
+    assert ctx["conversation_created"] is created and ctx["message_status"] == status
     assert len(h.raw.calls) == calls
     assert ctx["conversation_id"] == ("thread-created-synthetic" if created else None)
 
 
 async def test_repeat_warning_includes_listing_id_in_key_and_normalizes_nfc(h):
-    h.responses(listing(), fixture("create_conversation"), Response())
+    h.responses(
+        listing(), {"conversationId": "thread-created-synthetic"}, sent_thread(text="Grüße")
+    )
     await h.ok("contact_seller", listing_id="101", text="Gru\u0308ße", contact_name="Synthetic")
-    h.responses(fixture("create_conversation"), Response())
+    h.responses({"conversationId": "thread-created-synthetic"}, sent_thread(text="Grüße"))
     repeated = await h.ok(
         "contact_seller", listing_id="101", text="Grüße", contact_name="Synthetic"
     )
     assert repeated["warnings"][0]["context"]["repeat_contact"] is True
-    h.responses(listing(id="102"), fixture("create_conversation"), Response())
+    h.responses(
+        listing(id="102"), {"conversationId": "thread-created-synthetic"}, sent_thread(text="Grüße")
+    )
     other = await h.ok("contact_seller", listing_id="102", text="Grüße", contact_name="Synthetic")
     assert not other["warnings"]
 

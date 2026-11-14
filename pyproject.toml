@@ -28,7 +28,7 @@ dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "pytest-socket>=0.7,<1", "ruff>=
 packages = ["src/kleinanzeigen_mcp"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/server.py", "/smoke_test.py", "/pyproject.toml", "/uv.lock", "/README.md", "/LICENSE", "/docs/DESIGN.md", "/docs/OPERATIONS.md", "/docs/validation-2026-10-16.md"]
+include = ["/src", "/server.py", "/smoke_test.py", "/pyproject.toml", "/uv.lock", "/README.md", "/LICENSE", "/docs/DESIGN.md", "/docs/OPERATIONS.md", "/docs/validation-2026-10-16.md", "/docs/validation-2026-11-14-first-contact.md"]
 
 [tool.ruff]
 target-version = "py313"
