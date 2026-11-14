@@ -460,6 +460,12 @@ class Messaging:
             # A clear create rejection establishes that no conversation was created.
             if phase == "create_conversation" and status == "not_sent":
                 created = False
+            # `create_conversation` now sends the text in the same request, so a phase
+            # that reached the wire can only be "unknown" after an ambiguous outcome —
+            # never a blanket "not_sent". Only the pre-send phases are definitely unsent.
+            message_status = (
+                status if phase in {"create_conversation", "reply", "verify"} else "not_sent"
+            )
             raise self._failure(
                 exc,
                 phase,
@@ -468,6 +474,6 @@ class Messaging:
                     "listing_id": listing_id,
                     "conversation_id": conversation_id,
                     "conversation_created": created,
-                    "message_status": status if phase == "reply" else "not_sent",
+                    "message_status": message_status,
                 },
             ) from None
